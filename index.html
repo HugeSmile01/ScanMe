@@ -741,12 +741,13 @@
 
         /* Accessibility: Respect prefers-reduced-motion */
         @media (prefers-reduced-motion: reduce) {
-            .scanner-line animate {
-                animation-duration: 0s !important;
-                transition-duration: 0s !important;
+            /* Hide animated scanner line for users with motion sensitivity */
+            .scanner-line {
+                display: none;
             }
             
-            * {
+            /* Reduce all other animations */
+            *, *::before, *::after {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
