@@ -11,6 +11,8 @@
     let autoRedirect = false;
     let qrHistory = [];
     let useFrontCamera = false;
+    let currentQRCode = null; // Store current QR code instance
+    let lastScannedCode = ''; // Prevent duplicate scans
 
     // DOM Elements - Navigation
     const navScanner = document.getElementById('nav-scanner');
@@ -59,6 +61,7 @@
     // Initialize
     function init() {
         setupEventListeners();
+        loadTheme();
         loadHistory();
         checkPWAInstallation();
         showPage('scanner');
@@ -134,9 +137,22 @@
 
     // Theme Toggle
     function toggleTheme() {
-        // Simple theme toggle - could be expanded
-        btnTheme.textContent = btnTheme.textContent === '🌙' ? '☀️' : '🌙';
-        showNotification('Theme toggled!');
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        btnTheme.textContent = isLight ? '☀️' : '🌙';
+        
+        // Save theme preference
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        showNotification(isLight ? 'Light theme activated!' : 'Dark theme activated!');
+    }
+
+    // Load saved theme
+    function loadTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            btnTheme.textContent = '☀️';
+        }
     }
 
     // Scanner Functions
@@ -152,16 +168,74 @@
 
             scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
             videoElement.srcObject = scannerStream;
-            videoElement.play();
+            await videoElement.play();
 
             showNotification('Scanner started!');
             
-            // Note: Actual QR code scanning would require jsQR library
-            // For now, we'll just show that the camera is active
+            // Start scanning for QR codes
+            scannerInterval = setInterval(scanQRCode, 300);
             
         } catch (error) {
             console.error('Error accessing camera:', error);
             alert('Could not access camera. Please ensure camera permissions are granted.');
+        }
+    }
+
+    function scanQRCode() {
+        if (!videoElement.videoWidth || !videoElement.videoHeight) {
+            return;
+        }
+
+        // Set canvas size to match video
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+
+        const context = canvasElement.getContext('2d');
+        context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+        const imageData = context.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        
+        // Use jsQR library to decode
+        if (typeof jsQR !== 'undefined') {
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+
+            if (code && code.data && code.data !== lastScannedCode) {
+                lastScannedCode = code.data;
+                handleScannedCode(code.data);
+                
+                // Prevent rapid re-scanning of the same code
+                setTimeout(() => {
+                    lastScannedCode = '';
+                }, 2000);
+            }
+        }
+    }
+
+    function handleScannedCode(data) {
+        // Display result
+        resultData.textContent = data;
+        resultContainer.classList.remove('hidden');
+        scannerResults.innerHTML = '';
+        
+        showNotification('QR Code scanned successfully!');
+
+        // Check if it's a URL and auto-redirect if enabled
+        if (autoRedirect && isValidURL(data)) {
+            showNotification('Redirecting to URL...');
+            setTimeout(() => {
+                window.open(data, '_blank');
+            }, 1000);
+        }
+    }
+
+    function isValidURL(string) {
+        try {
+            const url = new URL(string);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (_) {
+            return false;
         }
     }
 
@@ -213,25 +287,42 @@
         // Clear previous QR code
         qrPreview.innerHTML = '';
 
-        // Create a simple visual representation (placeholder)
-        // In production, this would use QRCode.js library
-        const qrDiv = document.createElement('div');
-        qrDiv.style.width = qrSize.value + 'px';
-        qrDiv.style.height = qrSize.value + 'px';
-        qrDiv.style.background = 'white';
-        qrDiv.style.border = '2px solid #10b981';
-        qrDiv.style.borderRadius = '8px';
-        qrDiv.style.display = 'flex';
-        qrDiv.style.alignItems = 'center';
-        qrDiv.style.justifyContent = 'center';
-        qrDiv.style.padding = '20px';
-        qrDiv.style.textAlign = 'center';
-        qrDiv.style.color = '#000';
-        qrDiv.style.fontSize = '12px';
-        qrDiv.style.wordBreak = 'break-all';
-        qrDiv.innerHTML = `<div>QR Code<br/><small>${text.substring(0, 50)}${text.length > 50 ? '...' : ''}</small></div>`;
-        
-        qrPreview.appendChild(qrDiv);
+        // Check if QRCode library is available
+        if (typeof QRCode === 'undefined') {
+            // Fallback to placeholder
+            const qrDiv = document.createElement('div');
+            qrDiv.style.width = qrSize.value + 'px';
+            qrDiv.style.height = qrSize.value + 'px';
+            qrDiv.style.background = 'white';
+            qrDiv.style.border = '2px solid #10b981';
+            qrDiv.style.borderRadius = '8px';
+            qrDiv.style.display = 'flex';
+            qrDiv.style.alignItems = 'center';
+            qrDiv.style.justifyContent = 'center';
+            qrDiv.style.padding = '20px';
+            qrDiv.style.textAlign = 'center';
+            qrDiv.style.color = '#000';
+            qrDiv.style.fontSize = '12px';
+            qrDiv.style.wordBreak = 'break-all';
+            qrDiv.innerHTML = `<div>QR Code<br/><small>${text.substring(0, 50)}${text.length > 50 ? '...' : ''}</small></div>`;
+            qrPreview.appendChild(qrDiv);
+        } else {
+            // Generate actual QR code using QRCode library
+            try {
+                currentQRCode = new QRCode(qrPreview, {
+                    text: text,
+                    width: parseInt(qrSize.value),
+                    height: parseInt(qrSize.value),
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel[qrErrorLevel.value]
+                });
+            } catch (error) {
+                console.error('Error generating QR code:', error);
+                alert('Error generating QR code. Please try again.');
+                return;
+            }
+        }
 
         // Show info and buttons
         qrInfo.classList.remove('hidden');
@@ -250,8 +341,30 @@
     }
 
     function downloadQRCode() {
-        // Placeholder for download functionality
-        showNotification('Download functionality requires QRCode.js library');
+        const qrCanvas = qrPreview.querySelector('canvas');
+        
+        if (!qrCanvas) {
+            showNotification('No QR code to download. Please generate one first.');
+            return;
+        }
+
+        try {
+            // Convert canvas to blob and download
+            qrCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `qrcode-${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showNotification('QR Code downloaded successfully!');
+            });
+        } catch (error) {
+            console.error('Error downloading QR code:', error);
+            alert('Error downloading QR code. Please try again.');
+        }
     }
 
     function copyQRData() {

@@ -11,11 +11,13 @@
     
     <!-- Security Headers -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self'">
     
     <title>ScanMe - QR Code Scanner & Generator</title>
     
-    <!-- Note: CDN resources removed for better performance and privacy -->
+    <!-- QR Code Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
     
     <style>
         * {
@@ -198,14 +200,33 @@
             height: 2rem;
             width: 3.5rem;
             align-items: center;
+            justify-content: space-between;
             border-radius: 9999px;
             cursor: pointer;
             background: #4b5563;
             transition: background 0.3s ease;
+            padding: 0 0.25rem;
         }
 
         .toggle-switch.active {
             background: var(--secondary);
+        }
+
+        .toggle-switch::before {
+            content: 'OFF';
+            position: absolute;
+            left: 0.5rem;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.7);
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toggle-switch.active::before {
+            content: 'ON';
+            left: 0.4rem;
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .toggle-switch::after {
@@ -218,6 +239,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             left: 0.125rem;
             transition: transform 0.3s ease;
+            z-index: 1;
         }
 
         .toggle-switch.active::after {
@@ -399,6 +421,99 @@
         /* Dark Mode (Default) */
         :root {
             color-scheme: dark;
+        }
+
+        /* Light Mode */
+        body.light-theme {
+            background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+            color: #1f2937;
+        }
+
+        body.light-theme .glass-effect {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .card:hover {
+            border-color: rgba(5, 150, 105, 0.5);
+            box-shadow: 0 8px 30px rgba(5, 150, 105, 0.2);
+        }
+
+        body.light-theme .input-field {
+            background: #ffffff;
+            color: #1f2937;
+            border: 1px solid #d1d5db;
+        }
+
+        body.light-theme .nav-btn {
+            color: #4b5563;
+        }
+
+        body.light-theme .nav-btn:hover {
+            background: rgba(209, 213, 219, 0.3);
+            color: #1f2937;
+        }
+
+        body.light-theme .nav-btn.active {
+            background: rgba(5, 150, 105, 0.1);
+            color: #059669;
+            border-color: #059669;
+        }
+
+        body.light-theme .text-gray-400 {
+            color: #6b7280;
+        }
+
+        body.light-theme .text-gray-500 {
+            color: #9ca3af;
+        }
+
+        body.light-theme .bg-gray-800 {
+            background-color: #f3f4f6;
+        }
+
+        body.light-theme .bg-gray-900 {
+            background-color: #e5e7eb;
+        }
+
+        body.light-theme .border-gray-700 {
+            border-color: #d1d5db;
+        }
+
+        body.light-theme .history-item {
+            background: #f9fafb;
+        }
+
+        body.light-theme .history-item:hover {
+            background: #f3f4f6;
+        }
+
+        body.light-theme .qr-output {
+            background: #f9fafb;
+            border: 2px dashed #10b981;
+        }
+
+        body.light-theme .qr-result-code {
+            background: #ffffff;
+            color: #059669;
+        }
+
+        body.light-theme ::-webkit-scrollbar-track {
+            background: rgba(243, 244, 246, 0.5);
+        }
+
+        body.light-theme ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+        }
+
+        body.light-theme ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
         }
 
         /* Utility Classes */
