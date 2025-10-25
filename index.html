@@ -11,29 +11,11 @@
     
     <!-- Security Headers -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https: blob:; connect-src 'self' https://identitytoolkit.googleapis.com https://firebaseremoteconfig.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self'">
     
     <title>Kingfisher QR Code Scanner & Generator</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- DOMPurify for XSS Prevention -->
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-    
-    <!-- QRCode.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <!-- jsQR for QR Code Scanning -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    <!-- Note: CDN resources removed for better performance and privacy -->
     
     <style>
         * {
@@ -104,28 +86,92 @@
         }
 
         .btn-primary {
-            @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(1);
             background: var(--secondary);
             color: white;
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+            min-height: 44px;
+            font-size: 1rem;
         }
 
         .btn-primary:hover {
             box-shadow: 0 6px 20px rgba(5, 150, 105, 0.5);
+            transform: scale(1.05);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
         }
 
         .btn-secondary {
-            @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(1);
             background: rgba(59, 130, 246, 0.2);
             color: #60a5fa;
             border: 1px solid #3b82f6;
             cursor: pointer;
+            min-height: 44px;
+            font-size: 1rem;
+        }
+
+        .btn-secondary:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.95);
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: #9ca3af;
+            border: 1px solid transparent;
+            cursor: pointer;
+            min-height: 44px;
+            font-size: 0.875rem;
+        }
+
+        .nav-btn:hover {
+            background: rgba(75, 85, 99, 0.3);
+            color: #f3f4f6;
+        }
+
+        .nav-btn.active {
+            background: rgba(5, 150, 105, 0.2);
+            color: #10b981;
+            border-color: #059669;
         }
 
         .input-field {
-            @apply w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 outline-none smooth-transition;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            background: #1f2937;
+            color: white;
+            border: 1px solid #374151;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .input-field:focus {
+            border-color: #10b981;
+            ring: 2px;
+            ring-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
         }
 
         .input-field::placeholder {
@@ -133,7 +179,9 @@
         }
 
         .card {
-            @apply rounded-xl p-6 smooth-transition;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
             background: rgba(31, 41, 55, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -145,7 +193,13 @@
         }
 
         .toggle-switch {
-            @apply relative inline-flex h-8 w-14 items-center rounded-full cursor-pointer;
+            position: relative;
+            display: inline-flex;
+            height: 2rem;
+            width: 3.5rem;
+            align-items: center;
+            border-radius: 9999px;
+            cursor: pointer;
             background: #4b5563;
             transition: background 0.3s ease;
         }
@@ -156,50 +210,82 @@
 
         .toggle-switch::after {
             content: '';
-            @apply absolute w-7 h-7 bg-white rounded-full shadow-md;
-            left: 0.5px;
+            position: absolute;
+            width: 1.75rem;
+            height: 1.75rem;
+            background: white;
+            border-radius: 9999px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            left: 0.125rem;
             transition: transform 0.3s ease;
         }
 
         .toggle-switch.active::after {
-            transform: translateX(1.75rem);
+            transform: translateX(1.5rem);
         }
 
         .scanner-container {
-            @apply relative w-full max-w-2xl mx-auto;
+            position: relative;
+            width: 100%;
+            max-width: 48rem;
+            margin: 0 auto;
             aspect-ratio: 1 / 1;
         }
 
         #qr-scanner {
-            @apply w-full h-full rounded-xl object-cover;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+            object-fit: cover;
         }
 
         #qr-canvas {
-            @apply hidden;
+            display: none;
         }
 
         .qr-output {
-            @apply p-6 rounded-xl bg-gray-900 border-2 border-dashed border-green-500 smooth-transition;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: #111827;
+            border: 2px dashed #10b981;
+            transition: all 0.3s ease;
         }
 
         .qr-result-code {
-            @apply p-4 rounded-lg bg-gray-800 font-mono text-sm text-green-400 break-all;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: #1f2937;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #6ee7b7;
+            word-break: break-all;
             max-height: 150px;
             overflow-y: auto;
         }
 
         .history-item {
-            @apply p-4 rounded-lg bg-gray-800 cursor-pointer smooth-transition;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: #1f2937;
+            cursor: pointer;
+            transition: all 0.3s ease;
             border-left: 3px solid var(--secondary);
         }
 
         .history-item:hover {
-            background: gray-700;
+            background: #374151;
             transform: translateX(5px);
         }
 
         .community-badge {
-            @apply inline-block px-3 py-1 rounded-full text-sm font-semibold bg-amber-900 text-amber-200 border border-amber-700;
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: #78350f;
+            color: #fcd34d;
+            border: 1px solid #92400e;
         }
 
         .loader {
@@ -217,7 +303,13 @@
         }
 
         .notification {
-            @apply fixed top-4 right-4 px-6 py-4 rounded-lg font-semibold shadow-lg;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             background: var(--success);
             color: white;
             animation: slideIn 0.3s ease-out;
@@ -236,22 +328,397 @@
         }
 
         .icon {
-            @apply inline-block w-6 h-6;
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
         }
 
+        /* Mobile optimizations */
         @media (max-width: 768px) {
             .scanner-container {
-                aspect-ratio: 16 / 9;
+                aspect-ratio: 4 / 3;
             }
 
             .btn-primary, .btn-secondary {
-                @apply px-4 py-2 text-sm;
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+                min-height: 44px;
+            }
+
+            .nav-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.25rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.125rem;
+            }
+
+            .notification {
+                left: 1rem;
+                right: 1rem;
+                top: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .nav-buttons {
+                display: flex;
+                gap: 0.25rem;
+                flex-wrap: wrap;
+            }
+
+            .nav-btn {
+                padding: 0.5rem;
+                font-size: 0.7rem;
+            }
+
+            body {
+                font-size: 14px;
             }
         }
 
         /* Dark Mode (Default) */
         :root {
             color-scheme: dark;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .sticky {
+            position: sticky;
+        }
+
+        .top-0 {
+            top: 0;
+        }
+
+        .z-50 {
+            z-index: 50;
+        }
+
+        .fixed {
+            position: fixed;
+        }
+
+        .inset-0 {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-3 {
+            gap: 0.75rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .space-y-3 > * + * {
+            margin-top: 0.75rem;
+        }
+
+        .space-y-4 > * + * {
+            margin-top: 1rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .max-w-7xl {
+            max-width: 80rem;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .py-4 {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .py-8 {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mt-8 {
+            margin-top: 2rem;
+        }
+
+        .mt-16 {
+            margin-top: 4rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+
+        .text-xl {
+            font-size: 1.25rem;
+            line-height: 1.75rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+            line-height: 1rem;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+
+        .rounded-xl {
+            border-radius: 0.75rem;
+        }
+
+        .bg-gray-800 {
+            background-color: #1f2937;
+        }
+
+        .bg-gray-900 {
+            background-color: #111827;
+        }
+
+        .border-gray-700 {
+            border-color: #374151;
+        }
+
+        .text-gray-400 {
+            color: #9ca3af;
+        }
+
+        .text-gray-500 {
+            color: #6b7280;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+        }
+
+        .grid-cols-1 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        @media (min-width: 768px) {
+            .md\\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .md\\:flex-row {
+                flex-direction: row;
+            }
+
+            .md\\:mt-0 {
+                margin-top: 0;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .lg\\:grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .lg\\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .lg\\:col-span-1 {
+                grid-column: span 1 / span 1;
+            }
+
+            .lg\\:col-span-2 {
+                grid-column: span 2 / span 2;
+            }
+        }
+
+        .gap-8 {
+            gap: 2rem;
+        }
+
+        .overflow-y-auto {
+            overflow-y: auto;
+        }
+
+        .max-h-96 {
+            max-height: 24rem;
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .resize-none {
+            resize: none;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        .relative {
+            position: relative;
+        }
+
+        .absolute {
+            position: absolute;
+        }
+
+        .pointer-events-none {
+            pointer-events: none;
+        }
+
+        .overflow-x-hidden {
+            overflow-x: hidden;
+        }
+
+        .min-h-screen {
+            min-height: 100vh;
+        }
+
+        .border {
+            border-width: 1px;
+        }
+
+        .border-b {
+            border-bottom-width: 1px;
+        }
+
+        .border-t {
+            border-top-width: 1px;
+        }
+
+        .border-2 {
+            border-width: 2px;
+        }
+
+        .border-4 {
+            border-width: 4px;
+        }
+
+        .border-dashed {
+            border-style: dashed;
+        }
+
+        .border-green-500 {
+            border-color: #10b981;
+        }
+
+        .p-4 {
+            padding: 1rem;
+        }
+
+        .p-6 {
+            padding: 1.5rem;
+        }
+
+        .p-8 {
+            padding: 2rem;
+        }
+
+        .pt-6 {
+            padding-top: 1.5rem;
+        }
+
+        .list-disc {
+            list-style-type: disc;
+        }
+
+        .list-inside {
+            list-style-position: inside;
+        }
+
+        .space-y-1 > * + * {
+            margin-top: 0.25rem;
+        }
+
+        .top-32 {
+            top: 8rem;
         }
 
         /* Scrollbar styling */
@@ -276,24 +743,24 @@
 <body class="overflow-x-hidden">
     <!-- Navigation Header -->
     <header class="sticky top-0 z-50 glass-effect border-b border-gray-700">
-        <nav class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <nav class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between" style="flex-wrap: wrap; gap: 1rem;">
             <div class="flex items-center gap-3">
                 <div class="text-3xl">🦅</div>
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent" style="background: linear-gradient(to right, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                     Kingfisher QR
                 </h1>
             </div>
-            <div class="flex items-center gap-4">
-                <button id="nav-scanner" class="nav-btn active px-4 py-2 rounded-lg font-semibold smooth-transition" data-page="scanner">
+            <div class="nav-buttons flex items-center gap-2">
+                <button id="nav-scanner" class="nav-btn active" data-page="scanner">
                     📱 Scanner
                 </button>
-                <button id="nav-generator" class="nav-btn px-4 py-2 rounded-lg font-semibold smooth-transition" data-page="generator">
+                <button id="nav-generator" class="nav-btn" data-page="generator">
                     ⚙️ Generator
                 </button>
-                <button id="btn-theme" class="px-4 py-2 rounded-lg font-semibold smooth-transition bg-gray-800 hover:bg-gray-700">
+                <button id="btn-theme" class="nav-btn" style="background: #1f2937;">
                     🌙
                 </button>
-                <button id="btn-install" class="px-4 py-2 rounded-lg font-semibold smooth-transition bg-amber-600 hover:bg-amber-700 hidden">
+                <button id="btn-install" class="nav-btn hidden" style="background: #d97706; color: white;">
                     📥 Install
                 </button>
             </div>
@@ -648,6 +1115,6 @@
     </div>
 
     <!-- Scripts -->
-    <script src="./main.ts"></script>
+    <script src="./main.js"></script>
 </body>
 </html>
