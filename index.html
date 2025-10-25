@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure QR Code Scanner & Generator for Kingfishers - PWA Application">
+    <meta name="theme-color" content="#1f2937">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kingfisher QR">
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https: blob:; connect-src 'self' https://identitytoolkit.googleapis.com https://firebaseremoteconfig.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app">
+    
+    <title>Kingfisher QR Code Scanner & Generator</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- DOMPurify for XSS Prevention -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- jsQR for QR Code Scanning -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1f2937;
+            --secondary: #059669;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
+
+        .glass-effect {
+            background: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        }
+
+        .gradient-accent {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        }
+
+        .smooth-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse-ring {
+            animation: pulseRing 2s infinite;
+        }
+
+        @keyframes pulseRing {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+        }
+
+        .btn-primary {
+            @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.5);
+        }
+
+        .btn-secondary {
+            @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid #3b82f6;
+            cursor: pointer;
+        }
+
+        .input-field {
+            @apply w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 outline-none smooth-transition;
+        }
+
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+
+        .card {
+            @apply rounded-xl p-6 smooth-transition;
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover {
+            border-color: rgba(5, 150, 105, 0.5);
+            box-shadow: 0 8px 30px rgba(5, 150, 105, 0.2);
+        }
+
+        .toggle-switch {
+            @apply relative inline-flex h-8 w-14 items-center rounded-full cursor-pointer;
+            background: #4b5563;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--secondary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            @apply absolute w-7 h-7 bg-white rounded-full shadow-md;
+            left: 0.5px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(1.75rem);
+        }
+
+        .scanner-container {
+            @apply relative w-full max-w-2xl mx-auto;
+            aspect-ratio: 1 / 1;
+        }
+
+        #qr-scanner {
+            @apply w-full h-full rounded-xl object-cover;
+        }
+
+        #qr-canvas {
+            @apply hidden;
+        }
+
+        .qr-output {
+            @apply p-6 rounded-xl bg-gray-900 border-2 border-dashed border-green-500 smooth-transition;
+        }
+
+        .qr-result-code {
+            @apply p-4 rounded-lg bg-gray-800 font-mono text-sm text-green-400 break-all;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            @apply p-4 rounded-lg bg-gray-800 cursor-pointer smooth-transition;
+            border-left: 3px solid var(--secondary);
+        }
+
+        .history-item:hover {
+            background: gray-700;
+            transform: translateX(5px);
+        }
+
+        .community-badge {
+            @apply inline-block px-3 py-1 rounded-full text-sm font-semibold bg-amber-900 text-amber-200 border border-amber-700;
+        }
+
+        .loader {
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            @apply fixed top-4 right-4 px-6 py-4 rounded-lg font-semibold shadow-lg;
+            background: var(--success);
+            color: white;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .icon {
+            @apply inline-block w-6 h-6;
+        }
+
+        @media (max-width: 768px) {
+            .scanner-container {
+                aspect-ratio: 16 / 9;
+            }
+
+            .btn-primary, .btn-secondary {
+                @apply px-4 py-2 text-sm;
+            }
+        }
+
+        /* Dark Mode (Default) */
+        :root {
+            color-scheme: dark;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(31, 41, 55, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 glass-effect border-b border-gray-700">
+        <nav class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="text-3xl">🦅</div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+                    Kingfisher QR
+                </h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="nav-scanner" class="nav-btn active px-4 py-2 rounded-lg font-semibold smooth-transition" data-page="scanner">
+                    📱 Scanner
+                </button>
+                <button id="nav-generator" class="nav-btn px-4 py-2 rounded-lg font-semibold smooth-transition" data-page="generator">
+                    ⚙️ Generator
+                </button>
+                <button id="btn-theme" class="px-4 py-2 rounded-lg font-semibold smooth-transition bg-gray-800 hover:bg-gray-700">
+                    🌙
+                </button>
+                <button id="btn-install" class="px-4 py-2 rounded-lg font-semibold smooth-transition bg-amber-600 hover:bg-amber-700 hidden">
+                    📥 Install
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="min-h-[calc(100vh-80px)] py-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- Scanner Page -->
+            <div id="page-scanner" class="page-content fade-in-up">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Scanner Column -->
+                    <div class="lg:col-span-2">
+                        <div class="card">
+                            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                                <span>📱</span> QR Code Scanner
+                            </h2>
+                            
+                            <!-- Camera View -->
+                            <div class="scanner-container mb-6">
+                                <video id="qr-scanner" playsinline></video>
+                                <canvas id="qr-canvas"></canvas>
+                                <div class="absolute inset-0 rounded-xl border-4 border-green-500 pointer-events-none" style="box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.2);"></div>
+                            </div>
+
+                            <!-- Scanner Controls -->
+                            <div class="flex flex-wrap gap-3 mb-6">
+                                <button id="btn-start-scanner" class="btn-primary flex items-center gap-2">
+                                    <span>▶️</span> Start Scan
+                                </button>
+                                <button id="btn-stop-scanner" class="btn-secondary flex items-center gap-2">
+                                    <span>⏹️</span> Stop Scan
+                                </button>
+                                <button id="btn-switch-camera" class="btn-secondary flex items-center gap-2">
+                                    <span>🔄</span> Switch Camera
+                                </button>
+                            </div>
+
+                            <!-- Redirect Toggle -->
+                            <div class="bg-gray-800 p-4 rounded-lg flex items-center justify-between">
+                                <div>
+                                    <p class="font-semibold">Auto Redirect</p>
+                                    <p class="text-sm text-gray-400">Automatically redirect to scanned URL</p>
+                                </div>
+                                <label class="toggle-switch" id="toggle-redirect">
+                                    <input type="checkbox" class="hidden">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Column -->
+                    <div class="lg:col-span-1">
+                        <div class="card sticky top-32">
+                            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                                <span>✅</span> Results
+                            </h3>
+
+                            <div id="scanner-results" class="space-y-4">
+                                <p class="text-gray-400 text-center py-8">
+                                    Scan a QR code to see results here
+                                </p>
+                            </div>
+
+                            <!-- Results Output -->
+                            <div id="result-container" class="hidden space-y-4">
+                                <div class="qr-output">
+                                    <p class="text-sm text-gray-400 mb-2">Scanned Data:</p>
+                                    <div id="result-data" class="qr-result-code"></div>
+                                </div>
+                                <button id="btn-copy-result" class="btn-primary w-full flex items-center justify-center gap-2">
+                                    <span>📋</span> Copy Result
+                                </button>
+                                <button id="btn-clear-result" class="btn-secondary w-full flex items-center justify-center gap-2">
+                                    <span>🗑️</span> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generator Page -->
+            <div id="page-generator" class="page-content hidden fade-in-up">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Input Column -->
+                    <div>
+                        <div class="card">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <span>⚙️</span> Generate QR Code
+                            </h2>
+
+                            <!-- Input Section -->
+                            <div class="space-y-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">
+                                        Enter Text or URL
+                                    </label>
+                                    <textarea 
+                                        id="qr-input" 
+                                        class="input-field resize-none" 
+                                        rows="5" 
+                                        placeholder="Enter the text or URL you want to encode in the QR code..."
+                                    ></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">
+                                        QR Code Size
+                                    </label>
+                                    <input 
+                                        type="range" 
+                                        id="qr-size" 
+                                        min="100" 
+                                        max="500" 
+                                        value="200" 
+                                        class="w-full cursor-pointer"
+                                    >
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        Current: <span id="size-value">200</span>px
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">
+                                        Error Correction Level
+                                    </label>
+                                    <select id="qr-error-level" class="input-field">
+                                        <option value="L">Low (7% recovery)</option>
+                                        <option value="M" selected>Medium (15% recovery)</option>
+                                        <option value="Q">High (25% recovery)</option>
+                                        <option value="H">Very High (30% recovery)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col gap-3">
+                                <button id="btn-generate-qr" class="btn-primary flex items-center justify-center gap-2 w-full">
+                                    <span>✨</span> Generate QR Code
+                                </button>
+                                <button id="btn-download-qr" class="btn-secondary flex items-center justify-center gap-2 w-full hidden">
+                                    <span>⬇️</span> Download as PNG
+                                </button>
+                                <button id="btn-copy-qr-url" class="btn-secondary flex items-center justify-center gap-2 w-full hidden">
+                                    <span>📋</span> Copy QR Data
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- History Section -->
+                        <div class="card mt-8">
+                            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                                <span>📜</span> Generation History
+                            </h3>
+                            <div id="qr-history" class="space-y-3 max-h-96 overflow-y-auto">
+                                <p class="text-gray-400 text-center py-4">
+                                    No history yet. Generate a QR code to see it here!
+                                </p>
+                            </div>
+                            <button id="btn-clear-history" class="btn-secondary w-full mt-4 hidden flex items-center justify-center gap-2">
+                                <span>🗑️</span> Clear History
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preview Column -->
+                    <div>
+                        <div class="card sticky top-32">
+                            <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                                <span>👁️</span> Preview
+                            </h3>
+
+                            <div id="qr-preview-container" class="bg-gray-900 p-8 rounded-xl text-center mb-6">
+                                <div id="qr-preview" class="flex items-center justify-center" style="min-height: 300px;">
+                                    <p class="text-gray-500">
+                                        Your QR code will appear here
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- QR Information -->
+                            <div id="qr-info" class="hidden space-y-3 text-sm">
+                                <div class="bg-gray-800 p-3 rounded-lg">
+                                    <p class="text-gray-400">Size:</p>
+                                    <p id="info-size" class="font-mono text-green-400"></p>
+                                </div>
+                                <div class="bg-gray-800 p-3 rounded-lg">
+                                    <p class="text-gray-400">Error Level:</p>
+                                    <p id="info-error" class="font-mono text-green-400"></p>
+                                </div>
+                                <div class="bg-gray-800 p-3 rounded-lg">
+                                    <p class="text-gray-400">Data Length:</p>
+                                    <p id="info-length" class="font-mono text-green-400"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-effect border-t border-gray-700 mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <!-- About -->
+                <div>
+                    <h4 class="font-bold mb-3 text-green-400">About</h4>
+                    <p class="text-sm text-gray-400">
+                        A secure, lightweight QR code scanner and generator built specifically for the Kingfisher community.
+                    </p>
+                </div>
+
+                <!-- Community Guidelines -->
+                <div>
+                    <h4 class="font-bold mb-3 text-green-400">Community Guidelines</h4>
+                    <ul class="text-sm text-gray-400 space-y-1">
+                        <li>✓ Use responsibly</li>
+                        <li>✓ Respect privacy</li>
+                        <li>✓ No malicious content</li>
+                        <li>✓ Report abuse</li>
+                    </ul>
+                </div>
+
+                <!-- Citation -->
+                <div>
+                    <h4 class="font-bold mb-3 text-amber-400">Citation</h4>
+                    <div class="community-badge">
+                        John Rish Ladica
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">BSIT-1A, SLSU-HC</p>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-gray-700 pt-6 flex flex-col md:flex-row items-center justify-between">
+                <p class="text-sm text-gray-400">
+                    © 2024 Kingfisher QR. All rights reserved.
+                </p>
+                <div class="flex gap-4 mt-4 md:mt-0">
+                    <button id="btn-guidelines" class="text-sm text-gray-400 hover:text-green-400 smooth-transition">
+                        📋 Guidelines
+                    </button>
+                    <button id="btn-privacy" class="text-sm text-gray-400 hover:text-green-400 smooth-transition">
+                        🔒 Privacy
+                    </button>
+                    <button id="btn-about" class="text-sm text-gray-400 hover:text-green-400 smooth-transition">
+                        ℹ️ About
+                    </button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Guidelines Modal -->
+    <div id="modal-guidelines" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="card max-w-2xl w-full max-h-96 overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-4">Community Guidelines</h2>
+            <div class="space-y-4 text-gray-300">
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">✓ Be Respectful</h3>
+                    <p>Treat all users with courtesy and respect. No harassment, bullying, or hate speech.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">✓ Use Responsibly</h3>
+                    <p>Generate and scan QR codes only for legitimate purposes. No phishing or malicious content.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">✓ Respect Privacy</h3>
+                    <p>Do not share personal information without consent. Protect your data and others'.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">✓ Report Abuse</h3>
+                    <p>If you encounter malicious QR codes or abuse, please report immediately.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">✓ Follow Laws</h3>
+                    <p>Comply with all applicable laws and regulations in your jurisdiction.</p>
+                </div>
+            </div>
+            <button class="btn-primary w-full mt-6 modal-close">Got it! 👍</button>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div id="modal-privacy" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="card max-w-2xl w-full max-h-96 overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-4">Privacy Policy</h2>
+            <div class="space-y-4 text-gray-300">
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">🔒 Data Protection</h3>
+                    <p>Your data is protected with industry-standard encryption. All QR codes are processed securely.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">📱 Local Storage</h3>
+                    <p>QR history is stored locally on your device. No data is sent to external servers.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">🔐 Authentication</h3>
+                    <p>We use Firebase Anonymous Authentication to protect your privacy while tracking usage.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">🚫 No Third Parties</h3>
+                    <p>We do not sell or share your data with third parties.</p>
+                </div>
+            </div>
+            <button class="btn-primary w-full mt-6 modal-close">Understood! ✓</button>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="modal-about" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="card max-w-2xl w-full max-h-96 overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-4">About Kingfisher QR</h2>
+            <div class="space-y-4 text-gray-300">
+                <p>
+                    Kingfisher QR is a lightweight, secure QR code scanner and generator PWA (Progressive Web Application) designed for the Kingfisher community.
+                </p>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">Features:</h3>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Real-time QR code scanning with camera</li>
+                        <li>Generate custom QR codes from text or URLs</li>
+                        <li>Auto-redirect to scanned URLs</li>
+                        <li>Download QR codes as PNG images</li>
+                        <li>Full offline support via PWA</li>
+                        <li>Secure authentication</li>
+                        <li>History tracking</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-amber-400 mb-2">👨‍💻 Created by:</h3>
+                    <p>John Rish Ladica</p>
+                    <p class="text-sm text-gray-400">BSIT-1A, SLSU-HC</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">Technology Stack:</h3>
+                    <p class="text-sm">TypeScript • Firebase • PWA • Service Workers • Tailwind CSS</p>
+                </div>
+            </div>
+            <button class="btn-primary w-full mt-6 modal-close">Close</button>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./main.ts"></script>
+</body>
+</html>
