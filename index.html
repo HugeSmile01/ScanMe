@@ -738,6 +738,20 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
         }
+
+        /* Accessibility: Respect prefers-reduced-motion */
+        @media (prefers-reduced-motion: reduce) {
+            .scanner-line animate {
+                animation-duration: 0s !important;
+                transition-duration: 0s !important;
+            }
+            
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -745,7 +759,9 @@
     <header class="sticky top-0 z-50 glass-effect border-b border-gray-700">
         <nav class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between" style="flex-wrap: wrap; gap: 1rem;">
             <div class="flex items-center gap-3">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ScanMe QR Code Scanner Logo">
+                    <title>ScanMe Logo</title>
+                    <desc>A QR code icon with an animated scanner line</desc>
                     <!-- QR Code Pattern -->
                     <rect x="2" y="2" width="28" height="28" fill="#1f2937" stroke="#10b981" stroke-width="1.5" rx="2"/>
                     <!-- Top-left square -->
@@ -770,7 +786,7 @@
                     <rect x="20" y="24" width="2" height="2" fill="#10b981"/>
                     <rect x="24" y="24" width="2" height="2" fill="#10b981"/>
                     <!-- Scanner line (animated) -->
-                    <line x1="0" y1="16" x2="32" y2="16" stroke="#f59e0b" stroke-width="1.5" opacity="0.8">
+                    <line x1="0" y1="16" x2="32" y2="16" stroke="#f59e0b" stroke-width="1.5" opacity="0.8" class="scanner-line">
                         <animate attributeName="y1" values="4;28;4" dur="2s" repeatCount="indefinite"/>
                         <animate attributeName="y2" values="4;28;4" dur="2s" repeatCount="indefinite"/>
                     </line>
